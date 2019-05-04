@@ -1,0 +1,7 @@
+{
+  "paths" : {
+	"raw"     : "D:/database/gtex/raw/",
+	"clean"     : "D:/database/gtex/clean/",
+	"scratch"     : "D:/database/gtex/scratch/"
+  }
+}
