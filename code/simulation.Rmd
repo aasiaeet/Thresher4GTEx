@@ -18,7 +18,7 @@ library(abind)
 ```
 ### Initializing paramteres and setting seed
 ```{r init}
-n <- 20 #number of samples
+n <- 30 #number of samples
 p <- 10 #number of principal components
 m <- 100 #number of responses
 set.seed(100)
