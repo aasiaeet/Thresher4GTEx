@@ -66,7 +66,7 @@ print("Omega for Tth iteration is:")
 print(omega)
 ```
 
-### Computing beta from Generalized Least Square Formula 
+### Computing beta from Generalized Least Square formula 
 #### ($\beta = A^{-1}B$ where $A = \sum_{i=1}^{n}X^T\Omega X$, $B = \sum_{i=1}^{n}X^T\Omega Y$ and $\Omega = {\Sigma}^{-1}$)
 
 ```{r gle}
@@ -81,7 +81,7 @@ for(i in 1:n){                          #computing A and B for n samples
   B <- B + b
 }
 isinv <- function(m) class(try(solve(m),silent=T))=="matrix" #checking if a matrix is invertible 
-is_inv_A = isinv(A)
+is_inv_A <- isinv(A)
 if(is_inv_A){
   print("A is invertible, we can calculate beta")
   A_inv <- solve(A)
