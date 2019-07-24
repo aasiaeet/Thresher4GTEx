@@ -1,0 +1,96 @@
+---
+title: "A Simulation to solve an MLE optimization problem"
+author: "Maryam"
+date: "Jul 24, 2019"
+output: html_document
+---
+#### This simulation is just for one iteration of the algorithm.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Loading glasso and requirements
+
+```{r packages}
+library(glasso)
+library(Matrix)
+library(abind)
+```
+### Initializing paramteres and setting seed
+```{r init}
+n <- 20 #number of samples
+p <- 10 #number of principal components
+m <- 100 #number of responses
+set.seed(100)
+```
+### Generating X_i and x (n samples of X_i)
+```{r genx}
+samples <- list()
+for(i in 1:n){
+   X_i <- matrix(0L, nrow = m, ncol = m * p) #initializing X_i with zeros, dim(X_i) = m * mp
+   x_i <- matrix(runif(1 * p), ncol = p) #dim(x_i) = 1 * p
+   for(j in 1:(m)){                      #filling the main diagonal of X_i with x_i
+     X_i[j, seq(((j-1)*p)+1,j*p)] = x_i
+   }
+   samples[[i]] <- X_i
+}
+x <- abind(samples, rev.along = 3) #abind: converting array into matrix
+```
+### Generating y_i (with X_i, beta and sigma), and y (n samples of y_i)
+```{r geny}
+mu <- 0
+sigma <- 0.1
+labels <- list()
+for(i in 1:n){
+  beta <- matrix(runif(p*m), ncol = m) #dim(beta) = m * p
+  eps <- matrix(rnorm(m, mean = mu, sd = sigma), ncol = 1) #dim(eps) = m * 1
+  h <- x[i,,] %*% matrix(beta, nrow = p*m) 
+  y_i <- h + eps #dim(y_i) = m * 1
+  labels[[i]] <- y_i
+}    
+y <- abind(labels, rev.along = 3) #abind: converting array into matrix
+```
+
+### Creating S and computing $\Omega$ (with graphical lasso)
+
+```{r omega}
+myglasso <- function(S){
+    zero<-matrix(c(sample(1:floor(m/2), floor(m/2)+10, replace = TRUE)),ncol=2,byrow=TRUE)
+    a<-glasso(S,0,zero=zero) 
+    return(a$w)
+}
+mat <- matrix(runif(m^2)*2-1, ncol=m) 
+S <- t(mat) %*% mat #creating a random sample covariance matrix
+omega <- myglasso(S) #computing omega 
+print("Omega for Tth iteration is:")
+print(omega)
+```
+
+### Computing beta from Generalized Least Square Formula 
+#### ($\beta = A^{-1}B$ where $A = \sum_{i=1}^{n}X^T\Omega X$, $B = \sum_{i=1}^{n}X^T\Omega Y$ and $\Omega = {\Sigma}^{-1}$)
+
+```{r gle}
+A <- matrix(0L, nrow = m * p, ncol = m * p) #initialize A with zeros, dim(A) = mp * mp
+B <- matrix(0L, nrow = m * p, ncol = 1) #initialize B with zeros, dim(B) = mp * 1
+for(i in 1:n){                          #computing A and B for n samples
+  new_x_i <- matrix(x[i,,], nrow = m, ncol = m * p)
+  x_t <- matrix((t(new_x_i) %*% omega %*% new_x_i), nrow = m * p, ncol = m * p)
+  A <- A + x_t
+  new_y_i <- matrix(y[i,,], nrow = m, ncol = 1)
+  b <- t(new_x_i) %*% omega %*% new_y_i
+  B <- B + b
+}
+isinv <- function(m) class(try(solve(m),silent=T))=="matrix" #checking if a matrix is invertible 
+is_inv_A = isinv(A)
+if(is_inv_A){
+  print("A is invertible, we can calculate beta")
+  A_inv <- solve(A)
+  Beta <- A_inv %*% B 
+  new_Beta <- matrix(Beta, nrow = m, ncol = p) #dim(Beta) = m * p
+  print("Beta in Tth iteration is:")
+  print(new_Beta) 
+}
+```
+
+
+
